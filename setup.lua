@@ -123,7 +123,7 @@ InstallPlugins({
 })
 
 -- Copy oh-my-zsh themes dir contents to system.
-Copy("-a", "./.oh-my-zsh/custom/themes/", "~/.oh-my-zsh/custom/themes")
+Copy("-a", "./.oh-my-zsh/custom/themes/", "~/.oh-my-zsh/custom/themes/")
 
 -- Copy zsh config file to system.
 Copy("./.zshrc", "~/.zshrc")
