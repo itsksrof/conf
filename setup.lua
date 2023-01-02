@@ -46,6 +46,7 @@ InstallPackages({
     "python3-neovim",
     "bison",
     "ulauncher",
+    "fzf",
 })
 
 --[[
