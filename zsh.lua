@@ -1,25 +1,10 @@
--- Install the util-linux package. This package provides an utility called chsh
--- which will be used to change the user shell.
--- 
--- TODO: Improve this to find if the package is installed
-function InstallUtilLinux()
-    os.execute("sudo dnf install util-linux")
-end
-
--- Check if zsh is installed, if not install it.
-function InstallZsh()
-    if os.execute("zsh") == nil then
-        os.execute("sudo dnf install zsh")
-    end
-end
-
 -- Set zsh as the default shell for the user.
-function DefaultZsh()
+function ChangeShell()
     os.execute("chsh -s $(which zsh)")
 end
 
 -- Check if oh-my-zsh is installed, if not install it.
-function InstallOhMyZsh(url)
+function InstallOMZ(url)
     if os.execute("omz") == nil then
         os.execute(string.format('sh -c "$(curl -fsSL %s)"', url))
     end
