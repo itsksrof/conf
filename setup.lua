@@ -1,11 +1,11 @@
-require("system")
-require("nvm")
-require("gvm")
-require("flathub")
-require("zsh")
-require("kitty")
-require("neovim")
-require("ulauncher")
+require("modules.system")
+require("modules.nvm")
+require("modules.gvm")
+require("modules.flathub")
+require("modules.zsh")
+require("modules.kitty")
+require("modules.neovim")
+require("modules.ulauncher")
 
 --[[
 ===============================================================================
