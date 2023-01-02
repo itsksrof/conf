@@ -133,14 +133,8 @@ KITTY
 ===============================================================================
 --]]
 
--- Create kitty configuration dir.
-CreateKittyDir("~/.config/kitty/")
-
--- Copy kitty .conf files.
-CopyConfFiles({
-    "./kitty/kitty.conf",
-    "./kitty/current-theme.conf",
-}, "~/.config/kitty/")
+-- Copy kitty config dir to system.
+CopyKittyDir("./kitty/", "~/.config/")
 
 --[[
 ===============================================================================
