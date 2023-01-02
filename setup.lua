@@ -1,61 +1,62 @@
-require("modules.system")
-require("modules.nvm")
-require("modules.gvm")
-require("modules.flathub")
-require("modules.zsh")
-
---[[
-===============================================================================
-FUNCTIONS
-===============================================================================
---]]
-
-function Copy(flag, src, dest)
-    -- Example: cp -r ./nvim/ ~/.config/
-    os.execute(string.format("cp %s %s %s", flag, src, dest))
-end
-
 --[[
 ===============================================================================
 SYSTEM
 ===============================================================================
 --]]
 
--- Update system packages.
-UpdatePackages()
+function SetupSystem()
+    local hostname = "highlandpark"
+    local rpm_free = "free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
+    local rpm_nonfree = "nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+    local copr_repos = {"kwizart/fedy", "agriffis/neovim-nightly"}
+    local dnf_packages = {
+        "vlc",
+        "gnome-tweaks",
+        "gnome-extension-app",
+        "util-linux",
+        "zsh",
+        "kitty",
+        "fira-code-fonts",
+        "fedy",
+        "neovim",
+        "python3-neovim",
+        "bison",
+        "ulauncher",
+        "fzf",
+    }
 
--- Set system hostname
-SetHostname("highlandpark")
+    -- Update system packages.
+    os.execute("sudo dnf update")
 
--- Enable rpm free and non-free repo.
-EnableRPM("https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm")
-EnableRPM("https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm")
+    -- Set system hostname
+    os.execute(string.format("sudo hostnamectl set-hostname %s", hostname))
 
--- Install media codecs.
-InstallMediaCodecs()
+    -- Enable rpm free and non-free repo.
+    os.execute(string.format("sudo rpm -Uvh %s", rpm_free))
+    os.execute(string.format("sudo rpm -Uvh %s", rpm_nonfree))
 
--- Enable fedora copr repos.
-EnableCoprRepositories({
-    "kwizart/fedy",
-    "agriffis/neovim-nightly",
-})
+    -- Install media codecs.
+    os.execute([[
+    sudo dnf install gstreamer1-plugins-{bad-\*,good-\*,base}
+    gstreamer1-plugin-openh264 gstreamer1-libav
+    --exclude=gstreamer1-plugins-bad-free-devel
+    ]])
+    os.execute([[sudo dnf install lame\* --exclude=lame-devel]])
+    os.execute("sudo dnf group upgrade --with-optional Multimedia")
 
--- Install the provided packages.
-InstallPackages({
-    "vlc",
-    "gnome-tweaks",
-    "gnome-extension-app",
-    "util-linux",
-    "zsh",
-    "kitty",
-    "fira-code-fonts",
-    "fedy",
-    "neovim",
-    "python3-neovim",
-    "bison",
-    "ulauncher",
-    "fzf",
-})
+    -- Enable fedora copr repos.
+    for _, value in ipairs(copr_repos) do
+        os.execute(string.format("sudo dnf copr enable %s", value))
+    end
+
+    -- Install dnf packages.
+    for _, value in ipairs(dnf_packages) do
+        os.execute(string.format("sudo dnf install %s", value))
+    end
+end
+
+-- Run SetupSystem
+SetupSystem()
 
 --[[
 ===============================================================================
@@ -63,11 +64,21 @@ NODE VERSION MANAGER
 ===============================================================================
 --]]
 
--- Install nvm.
-InstallNVM("https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh")
+function SetupNVM()
+    local nvm = "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh"
 
--- Install the LTS node version.
-InstallNodeLTS()
+    -- Install the node version manager.
+    os.execute(string.format("curl -o- %s | bash", nvm))
+
+    -- Source .bashrc to enable the nvm command.
+    os.execute("source ~/.bashrc")
+
+    -- Install the LTS version of node using nvm.
+    os.execute("nvm install --lts")
+end
+
+-- Run SetupNVM
+SetupNVM()
 
 --[[
 ===============================================================================
@@ -75,14 +86,28 @@ GOLANG VERSION MANAGER
 ===============================================================================
 --]]
 
--- Install gvm.
-InstallGVM("https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer")
+function SetupGVM()
+    local gvm = "https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer"
+    local go_version = "go1.19.4"
 
--- Install go1.4 binary.
-InstallGoBinary()
+    -- Install the golang version manager.
+    os.execute(string.format("bash < <(curl -s -S -L %s)", gvm))
 
--- Install the given go version.
-InstallGoVersion("go1.19.4", true)
+    -- Source gvm to enable the gvm command.
+    os.execute("source ~/.gvm/scripts/gvm")
+
+    -- Install go1.4 binary which is required to install further go versions.
+    os.execute("gvm install go1.4 -B")
+
+    -- Use go1.4 in this session.
+    os.execute("gvm use go1.4")
+
+    -- Install the desired go version and set it as default.
+    os.execute(string.format("gvm install %s --default", go_version))
+end
+
+-- Run SetupGVM
+SetupGVM()
 
 --[[
 ===============================================================================
@@ -90,43 +115,63 @@ FLATHUB
 ===============================================================================
 --]]
 
--- Enable flathub repository in flatpak.
-EnableFlathub("https://flathub.org/repo/flathub.flatpakrepo")
+function SetupFlathub()
+    local flathub = "https://flathub.org/repo/flathub.flatpakrepo"
+    local flathub_packages = {
+        "com.bitwarden.dekstop",
+        "com.slack.Slack",
+        "io.dbeaver.DBeaverCommunity",
+        "org.flameshot.Flameshot",
+        "rest.insomnia.Insomnia"
+    }
 
--- Install the provided flatpak packages.
-InstallFlatpaks({
-    "com.bitwarden.dekstop",
-    "com.slack.Slack",
-    "io.dbeaver.DBeaverCommunity",
-    "org.flameshot.Flameshot",
-    "rest.insomnia.Insomnia",
-})
+    -- Enable flathub repository in flatpak.
+    os.execute(string.format("flatpak remote-add --if-not-exists flathub %s", flathub))
+
+    -- Install flathub packages.
+    for _, value in ipairs(flathub_packages) do
+        os.execute(string.format("flatpak install flathub %s", value))
+    end
+end
+
+-- Run SetupFlathub
+SetupFlathub()
 
 --[[
 ===============================================================================
-ZSH & OH-MY-ZSH
+SHELL
 ===============================================================================
 --]]
 
--- Sets zsh as default user shell.
-ChangeShell()
+function SetupShell()
+    local omz = "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+    local zsh_plugins = {
+        "agkozak/zsh-z ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-z",
+        "zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
+        "zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
+        "jirutka/zsh-shift-select.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-shift-select"
+    }
 
--- Install oh-my-zsh.
-InstallOMZ("https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh")
+    -- Sets zsh as the default user shell.
+    os.execute("chsh -s $(which zsh)")
 
--- Install oh-my-zsh plugins.
-InstallPlugins({
-    "agkozak/zsh-z ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-z",
-    "zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting",
-    "zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions",
-    "jirutka/zsh-shift-select.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-shift-select",
-})
+    -- Install the oh-my-zsh framework.
+    os.execute(string.format([[sh -c "$(curl -fsSL %s)"]], omz))
 
--- Copy oh-my-zsh themes dir contents to system.
-Copy("-a", "./.oh-my-zsh/custom/themes/", "~/.oh-my-zsh/custom/themes/")
+    -- Install plugins for the shell.
+    for _, value in ipairs(zsh_plugins) do
+        os.execute(string.format("git clone https://github.com/%s", value))
+    end
 
--- Copy zsh config file to system.
-Copy("./.zshrc", "~/.zshrc")
+    -- Copy zsh themes.
+    os.execute("cp -a ./zsh/themes/ ~/.oh-my-zsh/custom/themes/")
+
+    -- Copy zsh config.
+    os.execute("cp ./zsh/.zshrc ~/")
+end
+
+-- Run SetupShell
+SetupShell()
 
 --[[
 ===============================================================================
@@ -134,8 +179,13 @@ KITTY
 ===============================================================================
 --]]
 
--- Copy kitty config dir to system.
-Copy("-r", "./kitty/", "~/.config/")
+function SetupKitty()
+    -- Copy the kitty directory.
+    os.execute("cp -r ./kitty/ ~/.config/")
+end
+
+-- Run SetupKitty
+SetupKitty()
 
 --[[
 ===============================================================================
@@ -143,8 +193,13 @@ NEOVIM
 ===============================================================================
 --]]
 
--- Copy neovim config dir to system.
-Copy("-r", "./nvim/", "~/.config/")
+function SetupNeovim()
+    -- Copy the neovim directory.
+    os.execute("cp -r ./nvim/ ~/.config/")
+end
+
+-- Run SetupNeovim
+SetupNeovim()
 
 --[[
 ===============================================================================
@@ -152,5 +207,10 @@ ULAUNCHER
 ===============================================================================
 --]]
 
--- Copy ulauncher themes dir to system.
-Copy("-r", "./ulauncher/user-themes/", "~/.config/ulauncher/")
+function SetupUlauncher()
+    -- Copy the ulauncher themes directory.
+    os.execute("cp -r ./ulauncher/user-themes/ ~/.config/ulauncher/")
+end
+
+-- Run SetupUlauncher
+SetupUlauncher()
