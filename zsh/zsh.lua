@@ -13,6 +13,11 @@ function install_zsh()
     end
 end
 
+-- Set zsh as the default shell for the user.
+function default_zsh()
+    os.execute("chsh -s $(which zsh)")
+end
+
 -- Check if oh-my-zsh is installed, if not install it.
 function install_omz(url)
     if os.execute("omz") == nil then
