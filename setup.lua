@@ -3,9 +3,17 @@ require("modules.nvm")
 require("modules.gvm")
 require("modules.flathub")
 require("modules.zsh")
-require("modules.kitty")
-require("modules.neovim")
-require("modules.ulauncher")
+
+--[[
+===============================================================================
+FUNCTIONS
+===============================================================================
+--]]
+
+function Copy(flag, src, dest)
+    -- Example: cp -r ./nvim/ ~/.config/
+    os.execute(string.format("cp %s %s %s", flag, src, dest))
+end
 
 --[[
 ===============================================================================
@@ -114,18 +122,11 @@ InstallPlugins({
     "jirutka/zsh-shift-select.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-shift-select",
 })
 
--- Install oh-my-zsh themes.
-InstallThemes({
-    "ergenekonyigit/lambda-gitster.git",
-}, "~/")
+-- Copy oh-my-zsh themes dir contents to system.
+Copy("-a", "./.oh-my-zsh/custom/themes/", "~/.oh-my-zsh/custom/themes")
 
--- Copy oh-my-zsh themes.
-CopyThemes({
-    "~/lambda-gitster",
-}, "~/.oh-my-zsh/custom/themes/")
-
--- Copy zsh config.
-CopyConfig("./.zshrc", "~/.zshrc")
+-- Copy zsh config file to system.
+Copy("./.zshrc", "~/.zshrc")
 
 --[[
 ===============================================================================
@@ -134,7 +135,7 @@ KITTY
 --]]
 
 -- Copy kitty config dir to system.
-CopyKittyDir("./kitty/", "~/.config/")
+Copy("-r", "./kitty/", "~/.config/")
 
 --[[
 ===============================================================================
@@ -143,7 +144,7 @@ NEOVIM
 --]]
 
 -- Copy neovim config dir to system.
-CopyNeovimDir("./nvim/", "~/.config/")
+Copy("-r", "./nvim/", "~/.config/")
 
 --[[
 ===============================================================================
@@ -151,10 +152,5 @@ ULAUNCHER
 ===============================================================================
 --]]
 
--- Create ulauncher themes dir.
-CreateUlauncherThemesDir("~/.config/ulauncher/user-themes/")
-
--- Install the given ulauncher themes.
-InstallUlauncherThemes({
-    "git@github.com:kalenpw/transparent-adwaita.git",
-}, "~/.config/ulauncher/user-themes/")
+-- Copy ulauncher themes dir to system.
+Copy("-r", "./ulauncher/user-themes/", "~/.config/ulauncher/")
