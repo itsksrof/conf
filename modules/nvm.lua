@@ -5,6 +5,4 @@ function InstallNVM(url)
 end
 
 -- Install the LTS node version using the node version manager.
-function InstallNodeLTS()
-    os.execute("nvm install --lts")
-end
+function InstallNodeLTS() os.execute("nvm install --lts") end
